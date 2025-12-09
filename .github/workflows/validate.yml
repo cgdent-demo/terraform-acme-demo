@@ -1,0 +1,23 @@
+name: Terraform Validate
+
+on:
+  pull_request:
+    paths:
+      - 'envs/**'
+      - 'modules/**'
+      - '.github/**'
+
+jobs:
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Validate all environments
+        run: |
+          for d in envs/*; do
+            if [ -f "$d/main.tf" ]; then
+              (cd $d && terraform init -backend=false && terraform validate)
+            fi
+          done

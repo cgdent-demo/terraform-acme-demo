@@ -1,0 +1,12 @@
+import "tfplan/v2" as tfplan
+
+mandatory = ["Environment", "Owner", "CostCenter"]
+
+main = rule {
+  all tfplan.resources as _, r {
+    all r.instances as _, i {
+      t = i.applied.tags else {}
+      all mandatory as m { t.containskey(m) }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfstate*
+.terraform.lock.hcl
+*.log
+*.zip

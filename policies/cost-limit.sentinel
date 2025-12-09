@@ -1,0 +1,2 @@
+# Example placeholder (enforcement requires TFC cost estimation integration)
+main = rule { true }
