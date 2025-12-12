@@ -1,2 +1,2 @@
-variable "location" { default = "East US" }
+variable "location" { default = "Australia East" }
 variable "tags" { type = map(string) }
