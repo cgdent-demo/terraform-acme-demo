@@ -1,2 +1,17 @@
-# Example placeholder (enforcement requires TFC cost estimation integration)
-main = rule { true }
+import "tfplan/v2" as tfplan
+
+# Allow if:
+# - cost estimate is missing (common on free tier)
+# - OR cost_estimate includes total_monthly_cost AND it is <= 20
+
+main = rule {
+  (
+    (tfplan.cost_estimate is null)
+    or
+    (
+      (tfplan.cost_estimate is map)
+      and (tfplan.cost_estimate contains "total_monthly_cost")
+      and (tfplan.cost_estimate.total_monthly_cost <= 20)
+    )
+  )
+}
