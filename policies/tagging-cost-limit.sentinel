@@ -1,0 +1,96 @@
+import "tfplan/v2" as tfplan
+
+#
+# === CONFIGURATION ===
+#
+
+# Required tags
+mandatory_tags = ["Environment", "Owner", "CostCenter"]
+
+# Cost limit in USD
+max_cost = 200
+
+
+#
+# === MAIN RULE ===
+#
+# Both tag compliance AND cost compliance must be true.
+#
+
+main = rule {
+    tagging_ok and cost_ok
+}
+
+
+#
+# === TAGGING RULE ===
+#
+
+tagging_ok = rule {
+
+    all tfplan.resource_changes as _, rc {
+
+        # If no applied state exists for a resource, skip it (treat as ok)
+        rc.applied is null or has_required_tags(rc)
+    }
+}
+
+has_required_tags = func(rc) {
+
+    # If applied state missing completely → fail safely
+    if rc.applied is null {
+        false
+    } else {
+
+        # Check if "tags" exists
+        has_tags = rc.applied contains "tags"
+        if not has_tags {
+            false
+        } else {
+
+            tags = rc.applied.tags
+
+            # Old Sentinel engine cannot loop here, so check manually
+            has_env   = tags.containskey("Environment")
+            has_owner = tags.containskey("Owner")
+            has_costc = tags.containskey("CostCenter")
+
+            has_env and has_owner and has_costc
+        }
+    }
+}
+
+
+#
+# === COST RULE ===
+#
+
+cost_ok = rule {
+
+    # If cost estimate missing in free tier → ALLOW (for demo)
+    tfplan.cost_estimate is null or within_budget(tfplan.cost_estimate)
+}
+
+within_budget = func(ce) {
+
+    # Default monthly cost
+    monthly = 0.0
+
+    # Handle missing cost-estimate structure
+    if ce is null {
+        true
+    } else {
+
+        # Determine if monthly cost is available
+        has_monthly = ce contains "total_monthly_cost"
+
+        if has_monthly {
+            monthly = ce.total_monthly_cost
+        } else {
+            # No monthly cost available → ALLOW (demo behavior)
+            true
+        }
+    }
+
+    monthly <= max_cost
+}
